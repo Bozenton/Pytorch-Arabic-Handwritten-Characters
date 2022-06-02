@@ -37,7 +37,7 @@ if __name__ == '__main__':
     model.load_state_dict(torch.load(weights_path, map_location=device))
     model.eval()
 
-    test_accuracy_metric = Accuracy()
+    test_accuracy_metric = Accuracy().to(device)
     acc = 0.0
     with torch.no_grad():
         test_bar = tqdm(test_dataloader)
@@ -46,7 +46,7 @@ if __name__ == '__main__':
             outputs = model(test_images.to(device).to(torch.float32))
             predict_y = torch.max(outputs, dim=1)[1]
             acc += torch.eq(predict_y, test_labels.to(device)).sum().item()
-            batch_acc = test_accuracy_metric(predict_y, test_labels)
+            batch_acc = test_accuracy_metric(outputs.to(device), test_labels.to(device))
     test_accuracy = acc/test_num
     print(test_accuracy)
     print(test_accuracy_metric.compute())
