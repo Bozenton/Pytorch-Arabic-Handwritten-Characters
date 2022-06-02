@@ -1,6 +1,15 @@
 import torch
 from torch.utils.data import DataLoader
 from torch.utils.data import random_split
+from torch.utils.tensorboard import SummaryWriter
+
+import random
+import string
+
+random_comment = ''.join(random.sample(string.ascii_letters + string.digits, 8))
+writer = SummaryWriter('Arabic_Handwritten_Characters', comment=random_comment)
+
+
 import os
 import matplotlib.pyplot as plt
 from tqdm import tqdm
@@ -83,6 +92,9 @@ def main(batch_size=32, lr=0.0001, epochs=3, val_split = 0.2):
                 val_bar.desc = "val epoch[{}/{}]".format(epoch+1, epochs)
 
         val_accuracy = acc/val_num
+
+        writer.add_scalar(tag='val_acc:', scalar_value=val_accuracy, global_step=epoch)
+        writer.add_scalar(tag='loss', scalar_value=running_loss / train_steps, global_step=epoch)
         print("[epoch %d] train_loss: %.3f val_accuracy: %.3f" % (epoch+1, running_loss/train_steps, val_accuracy))
 
         if val_accuracy > best_acc:
