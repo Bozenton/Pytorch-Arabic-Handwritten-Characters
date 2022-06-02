@@ -7,8 +7,11 @@ from model import resnet34, resnet50, resnet101
 from ArabicCharactersDataset import ArabicCharactersDataset
 import matplotlib.pyplot as plt
 from tqdm import tqdm
-from torchmetrics import Accuracy
+from torchmetrics import Accuracy, Precision, Recall, F1Score, ConfusionMatrix
 
+import matplotlib as mpl
+import matplotlib.pyplot as plt
+import seaborn as sns
 
 weights_path = './arabic.pth'
 test_dir = './archive/Test Images 3360x32x32/test'
@@ -37,7 +40,11 @@ if __name__ == '__main__':
     model.load_state_dict(torch.load(weights_path, map_location=device))
     model.eval()
 
-    test_accuracy_metric = Accuracy().to(device)
+    test_accuracy_metric = Accuracy(average='macro', num_classes=28).to(device)
+    test_precision_metric = Precision(average='macro', num_classes=28).to(device)
+    test_recall_metric = Recall(average='macro', num_classes=28).to(device)
+    test_f1score_metric = F1Score(average='macro', num_classes=28).to(device)
+    test_confusion_matrix = ConfusionMatrix(num_classes=28).to(device)
     acc = 0.0
     with torch.no_grad():
         test_bar = tqdm(test_dataloader)
@@ -47,28 +54,35 @@ if __name__ == '__main__':
             predict_y = torch.max(outputs, dim=1)[1]
             acc += torch.eq(predict_y, test_labels.to(device)).sum().item()
             batch_acc = test_accuracy_metric(outputs.to(device), test_labels.to(device))
+            batch_prc = test_precision_metric(outputs.to(device), test_labels.to(device))
+            batch_rcl = test_recall_metric(outputs.to(device), test_labels.to(device))
+            batch_f1 = test_f1score_metric(outputs.to(device), test_labels.to(device))
+            batch_cm = test_confusion_matrix(outputs.to(device), test_labels.to(device))
     test_accuracy = acc/test_num
     print(test_accuracy)
-    print(test_accuracy_metric.compute())
+    print("Accuracy:", test_accuracy_metric.compute())
+    print("Precision:", test_precision_metric.compute())
+    print("Recall:", test_recall_metric.compute())
+    print("F1 Score:", test_f1score_metric.compute())
+    print("Confusion matrix: \n", test_confusion_matrix.compute())
 
-    # for data in test_bar:
-    #     sample, label = data
-    #     # sample = torch.unsqueeze(sample, dim=0)  # expand batch dimension
-    #     # labels.append(label)
-    #     with torch.no_grad():
-    #         outputs = model(sample.to(device).to(torch.float32))
-    #         predict_y = torch.max(outputs, dim=1)[1]
-    #         acc += torch.eq(predict_y, label.to(device)).sum().item()
-    #         # predict = int(torch.max(predict, 1).indices[0])
-    #         # predicts.append(predict)
-    # test_accuarcy = acc/test_num
-    # print(test_accuarcy)
-    # labels = np.array(labels)
-    # predicts = np.array(predicts)
-    # pred_dir = './data/pred/'
-    # if not os.path.exists(pred_dir):
-    #     os.system('mkdir -p ./data/pred/')
-    # label_path = os.path.join(pred_dir, 'label.npy')
-    # pred_path = os.path.join(pred_dir, 'pred.npy')
-    # np.save(label_path, labels)
-    # np.save(pred_path, predicts)
+    # Set photo parameters
+    # mpl.rcParams['font.sans-serif'] = 'Times New Roman'
+    # mpl.rcParams['axes.unicode_minus'] = False
+
+    f, ax = plt.subplots()
+    cm = test_confusion_matrix.compute()
+    cm = cm.cpu().numpy()
+    # cm = np.array(test_confusion_matrix.compute())
+    cm = np.around(cm/sum(cm), 28)
+
+    cmap = sns.color_palette("Spectral", as_cmap=True)
+    sns.heatmap(cm, annot=False, ax=ax, fmt='.4f', cmap=cmap)
+    # ticklabels = list(range(1,28+1))
+    # ticklabels = [str(i) for i in ticklabels]
+    # ax.set(xticklabels=ticklabels, yticklabels=ticklabels)
+    ax.set_title('Confusion Matrix', fontsize=16, fontweight='bold')
+    ax.set_xlabel('Predicted Class', fontsize=14, fontweight='bold')
+    ax.set_ylabel('True Class', fontsize=14, fontweight='bold')
+    plt.savefig('Confusion_Matrix.png', format='png', bbox_inches='tight', transparent=True, dpi=600)
+    # plt.show()
