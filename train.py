@@ -60,7 +60,7 @@ def main(batch_size=32, lr=0.0001, epochs=3, val_split = 0.2):
     optimizer = torch.optim.Adam(params, lr=lr)
 
     best_acc = 0.0
-    save_path = './ResNet.pth'
+    save_path = './arabic.pth'
     train_steps = len(train_dataloader)
 
     for epoch in range(epochs):
