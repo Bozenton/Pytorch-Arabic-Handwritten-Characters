@@ -29,6 +29,7 @@ class ArabicCharactersDataset(Dataset):
             label = self.target_transform(label)
         return img, label
 
+    
 if __name__ == "__main__":
     data_root = os.path.abspath(os.path.join(os.getcwd(), "archive"))
     train_image_root = os.path.join(data_root, "Train Images 13440x32x32/train")

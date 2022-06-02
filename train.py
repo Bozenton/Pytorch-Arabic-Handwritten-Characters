@@ -9,14 +9,14 @@ import string
 random_comment = ''.join(random.sample(string.ascii_letters + string.digits, 8))
 writer = SummaryWriter('Arabic_Handwritten_Characters', comment=random_comment)
 
-
 import os
 import matplotlib.pyplot as plt
 from tqdm import tqdm
 from model import resnet34, resnet50, resnet101
 from ArabicCharactersDataset import ArabicCharactersDataset
 
-def main(batch_size=32, lr=0.0001, epochs=3, val_split = 0.2):
+
+def main(batch_size=64, lr=1e-4, epochs=30, val_split = 0.2):
 
     device = torch.device("cuda:0" if torch.cuda.is_available() else "cpu")
     print("Using {} device".format(device))
@@ -42,14 +42,17 @@ def main(batch_size=32, lr=0.0001, epochs=3, val_split = 0.2):
     test_dataloader = DataLoader(test_dataset, batch_size=batch_size, shuffle=False, num_workers=num_workers)
     print("Using {} images for training, {} for validation, {} images for testing".format(train_num, val_num, test_num))
 
-    model = resnet50(num_classes=28)
+    model = resnet34(num_classes=28)
     # load pretrained weights
-    # download url: https://download.pytorch.org/models/resnet34-333f7ec4.pth
-    # model_weight_path = "./resnet34-333f7ec4.pth"
+    model_weight_path = "./arabic.pth"
     # assert os.path.exists(model_weight_path), \
-    #     "Pretrained weights file {} does not exist, you can downlaod " \
-    #     "it from: https://download.pytorch.org/models/resnet34-333f7ec4.pth".format(model_weight_path)
-    # model.load_state_dict(torch.load(model_weight_path, map_location=device))
+    #     "Pretrained weights file {} does not exist".format(model_weight_path)
+    if os.path.exists(model_weight_path):
+        model.load_state_dict(torch.load(model_weight_path, map_location=device))
+        lr=1e-5
+        print("Load weights from previous training")
+    else:
+        print("Cannot find the weights, training without pre-trained weights")
     model.to(device)
 
     # define loss function
@@ -58,6 +61,7 @@ def main(batch_size=32, lr=0.0001, epochs=3, val_split = 0.2):
     # construct an optimizer
     params = [p for p in model.parameters() if p.requires_grad]
     optimizer = torch.optim.Adam(params, lr=lr)
+    scheduler = torch.optim.lr_scheduler.ReduceLROnPlateau(optimizer, 'max', patience=3)
 
     best_acc = 0.0
     save_path = './arabic.pth'
@@ -92,7 +96,8 @@ def main(batch_size=32, lr=0.0001, epochs=3, val_split = 0.2):
                 val_bar.desc = "val epoch[{}/{}]".format(epoch+1, epochs)
 
         val_accuracy = acc/val_num
-
+        scheduler.step(val_accuracy)
+        
         writer.add_scalar(tag='val_acc:', scalar_value=val_accuracy, global_step=epoch)
         writer.add_scalar(tag='loss', scalar_value=running_loss / train_steps, global_step=epoch)
         print("[epoch %d] train_loss: %.3f val_accuracy: %.3f" % (epoch+1, running_loss/train_steps, val_accuracy))

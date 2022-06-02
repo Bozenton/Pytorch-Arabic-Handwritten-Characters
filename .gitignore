@@ -131,3 +131,4 @@ dmypy.json
 *.pth
 archive/
 image_classify_tensorboard/
+*.zip
