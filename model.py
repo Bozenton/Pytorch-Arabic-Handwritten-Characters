@@ -1,6 +1,6 @@
 import torch.nn as nn
 import torch
-
+from torch.utils.tensorboard import SummaryWriter
 
 class BasicBlock(nn.Module):
     expansion = 1
@@ -198,3 +198,9 @@ def resnext101_32x8d(num_classes=28, include_top=True):
                   include_top=include_top,
                   groups=groups,
                   width_per_group=width_per_group)
+
+if __name__ == "__main__":
+    dummy_input = torch.randn(8, 1, 32, 32)
+    model = resnet34(num_classes=28)
+    with SummaryWriter(comment='resnet34') as w:
+        w.add_graph(model, (dummy_input,))

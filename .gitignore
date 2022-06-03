@@ -130,5 +130,6 @@ dmypy.json
 
 *.pth
 archive/
-image_classify_tensorboard/
+Arabic_Handwritten_Characters/
 *.zip
+runs/

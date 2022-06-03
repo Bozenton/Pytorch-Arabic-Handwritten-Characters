@@ -1,6 +1,15 @@
 # Pytorch-Arabic-Handwritten-Characters
 Using convolutional neural network for Arabic handwritten characters recognition ([Kaggle competition](https://www.kaggle.com/datasets/mloey1/ahcd1))
 
+Here are some images from the dataset:
+
+![ch](./viz.png)
+
+you can get the above image by running the following command:
+```sh
+python visualization.py
+```
+
 ## Usage
 
 First you should download the dataset from the [kaggle website](https://www.kaggle.com/datasets/mloey1/ahcd1). And make sure that the directories is like this: 
